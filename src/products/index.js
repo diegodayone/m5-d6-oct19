@@ -3,11 +3,17 @@ const fs = require("fs-extra")
 const path = require("path")
 const router = express.Router()
 const uuid = require("uuid/v4")
+const multer = require("multer")
 
 const filePath = path.join(__dirname, "products.json")
 
 const readFile = async()=> {
     const buffer = await fs.readFile(filePath);
+    return JSON.parse(buffer.toString())
+}
+
+const readFileReviews = async()=> {
+    const buffer = await fs.readFile(path.join(__dirname, "../reviews/reviews.json"));
     return JSON.parse(buffer.toString())
 }
 
@@ -27,6 +33,11 @@ router.get("/:id", async (req, res)=>{
         res.status(404).send("Not found")
 })
 
+router.get("/:id/reviews", async (req, res) =>{
+    const reviews = await readFileReviews();
+    res.send(reviews.filter(r => r.elementId === req.params.id))
+})
+
 router.post("/", async (req, res) =>{
     const toAdd = {
         ...req.body,
@@ -39,6 +50,24 @@ router.post("/", async (req, res) =>{
     products.push(toAdd)
     await fs.writeFile(filePath, JSON.stringify(products))
     res.send(toAdd)
+})
+
+const multerConfig = multer({})
+router.post("/:id/upload", multerConfig.single("prodPic"), async (req, res)=>{
+    //we need to check if we have an existing product with the given id
+    const products = await readFile();
+    const product = products.find(prod => prod._id === req.params.id)
+    if (product)
+    {
+        const fileDest = path.join(__dirname,"../../images/", req.params.id + path.extname(req.file.originalname))
+        await fs.writeFile(fileDest, req.file.buffer)
+        product.updateAt = new Date();
+        product.imageUrl = "/images/" + req.params.id + path.extname(req.file.originalname);
+        await fs.writeFile(filePath, JSON.stringify(products))
+        res.send(product)
+    }
+    else
+        res.status(404).send("Not found")
 })
 
 router.delete("/:id", async (req, res)=>{
