@@ -32,6 +32,8 @@ router.get("/:id", async (req, res)=>{
 })
 
 router.post("/", async (req, res) =>{
+
+  
     //Is there any product with the given elementId?
     const products = await readFileProducts()
     if (!products.find(x => x._id === req.body.elementId))
