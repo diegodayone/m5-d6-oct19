@@ -43,6 +43,12 @@ router.post("/", async (req, res) =>{
 
 router.delete("/:id", async (req, res)=>{
     const products = await readFile();
+    //[4, 5, 6, 1, 2]
+    // we have to delete 6!
+    // => take everything that is not 6!
+    //[4, 5, 1, 2]
+    // we have to delete 3!
+    // ok, but in the new array, we have the same number of elements =>> 3 was not there!
     const afterDelete = products.filter(x => x._id !== req.params.id)
     if (products.length === afterDelete.length)
         return res.status(404).send("NOT FOUND")
